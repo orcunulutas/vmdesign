@@ -1,0 +1,1 @@
+gcc tim.c -o ti -Wall -Wextra
