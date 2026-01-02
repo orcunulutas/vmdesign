@@ -10,6 +10,7 @@
 int stack[MAX_STACK_SIZE];
 
 typedef enum {
+    INST_NOP,
     INST_PUSH,
     INST_POP,
     INST_ADD,
@@ -23,8 +24,10 @@ typedef enum {
     INST_JMP,
     INST_CJMP,
     INST_MUL,
+    INST_MOD,
     INST_DIV,
     INST_PRINT,
+    INST_HALT,
 } Inst_Set;
 
 typedef struct {
@@ -39,6 +42,7 @@ typedef struct {
     Inst *instructions;
 } Machine;
 
+#define DEF_INST_NOP() {.type=INST_NOP}
 #define DEF_INST_PUSH(x) {.type=INST_PUSH, .value=x}
 #define DEF_INST_POP() {.type=INST_POP}
 #define DEF_INST_ADD() {.type=INST_ADD}
@@ -47,6 +51,7 @@ typedef struct {
 #define DEF_INST_SWAP() {.type=INST_SWAP}
 
 #define DEF_INST_CMPE() {.type=INST_CMPE}
+#define DEF_INST_MOD() {.type=INST_MOD}
 #define DEF_INST_CMPNE() {.type=INST_CMPNE}
 
 #define DEF_INST_CMPL() {.type=INST_CMPL}
@@ -56,16 +61,12 @@ typedef struct {
 #define DEF_INST_DIV() {.type=INST_DIV}
 #define DEF_INST_CJMP(x) {.type=INST_JMP, .value=x}
 #define DEF_INST_PRINT() {.type=INST_PRINT}
-
+#define DEF_INST_HALT() {.type=INST_HALT}
 
 Inst program[] = {
-    DEF_INST_PUSH(1),
-    DEF_INST_PUSH(1),
-    DEF_INST_CMPE(),
-    DEF_INST_JMP(6),
-    DEF_INST_PUSH(2),
-    DEF_INST_ADD(),
-    DEF_INST_PUSH(4),
+    DEF_INST_PUSH(15),
+    DEF_INST_PUSH(3),
+    DEF_INST_MOD(),
     DEF_INST_PRINT(),
 };
 
@@ -149,7 +150,10 @@ int main() {
     for (size_t ip=0;ip<loaded_machine->program_size;ip++) {
         print_stack(loaded_machine);
 	switch (loaded_machine->instructions[ip].type) {
-            case INST_PUSH:
+	    case INST_NOP:
+		    continue;
+		break;
+	    case INST_PUSH:
                 push(loaded_machine,loaded_machine->instructions[ip].value);
                 break;
             case INST_POP:
@@ -246,10 +250,17 @@ int main() {
                 b=pop(loaded_machine);
                 push (loaded_machine,a/b);
                 break;
+            case INST_MOD:
+                a=pop(loaded_machine);
+                b=pop(loaded_machine);
+                push (loaded_machine,a%b);
+                break;
             case INST_PRINT:
                 printf("%d\n",pop(loaded_machine));
                 break;
-
+	    case INST_HALT:
+		ip = loaded_machine->program_size;
+		break;
         }
     }
     print_stack(loaded_machine);
