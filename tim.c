@@ -11,6 +11,8 @@ typedef enum {
     INST_POP,
     INST_ADD,
     INST_SUB,
+    INST_DUP,
+    INST_SWAP,
     INST_MUL,
     INST_DIV,
     INST_PRINT,
@@ -32,7 +34,8 @@ typedef struct {
 #define DEF_INST_POP() {.type=INST_POP}
 #define DEF_INST_ADD() {.type=INST_ADD}
 #define DEF_INST_SUB() {.type=INST_SUB}
-
+#define DEF_INST_DUP() {.type=INST_DUP}
+#define DEF_INST_SWAP() {.type=INST_SWAP}
 #define DEF_INST_MUL() {.type=INST_MUL}
 #define DEF_INST_DIV() {.type=INST_DIV}
 #define DEF_INST_PRINT() {.type=INST_PRINT}
@@ -41,7 +44,8 @@ typedef struct {
 Inst program[] = {
     DEF_INST_PUSH(5),
     DEF_INST_PUSH(10),
-    DEF_INST_ADD(),
+    DEF_INST_SWAP(),
+    DEF_INST_DUP(),
 };
 
 #define PROGRAM_SIZE (sizeof(program)/sizeof(program[0]))
@@ -49,7 +53,7 @@ Inst program[] = {
 
 int stack_size;
 
-void push(Machine *machine, int *value) {
+void push(Machine *machine, int value) {
     if (machine->stack_size >= MAX_STACK_SIZE) {
         fprintf(stderr,"ERROR: Stack Overflow\n");
         exit(1);
@@ -85,7 +89,7 @@ void write_program_to_file (Machine *machine,char *file_path) {
 
     fwrite(machine->instructions,
                     sizeof(machine->instructions[0]), 
-                    sizeof(machine->instructions)/sizeof(machine->instructions[0]),
+                    PROGRAM_SIZE,
                     file);
 
     fclose(file);
@@ -136,6 +140,17 @@ int main() {
                 a=pop(loaded_machine);
                 b=pop(loaded_machine);
                 push(loaded_machine,b-a);
+                break;
+            case INST_DUP:
+                a=pop(loaded_machine);
+                push(loaded_machine,a);
+                push(loaded_machine,a);
+                break;
+            case INST_SWAP:
+                a=pop(loaded_machine);
+                b=pop(loaded_machine);
+                push(loaded_machine,a);
+                push(loaded_machine,b);
                 break;
             case INST_MUL:
                 a=pop(loaded_machine);
