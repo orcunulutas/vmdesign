@@ -1,6 +1,6 @@
 
 // 1-21-40
-//
+// 1-27-35
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,6 +21,7 @@ typedef enum {
     INST_CMPL,
     INST_CMPG,
     INST_JMP,
+    INST_CJMP,
     INST_MUL,
     INST_DIV,
     INST_PRINT,
@@ -53,14 +54,18 @@ typedef struct {
 #define DEF_INST_MUL() {.type=INST_MUL}
 #define DEF_INST_JMP(x) {.type=INST_JMP, .value=x}
 #define DEF_INST_DIV() {.type=INST_DIV}
+#define DEF_INST_CJMP(x) {.type=INST_JMP, .value=x}
 #define DEF_INST_PRINT() {.type=INST_PRINT}
 
 
 Inst program[] = {
-    DEF_INST_PUSH(10),
-    DEF_INST_PUSH(12),
-    DEF_INST_CMPG(),
-    DEF_INST_JMP(0),
+    DEF_INST_PUSH(1),
+    DEF_INST_PUSH(1),
+    DEF_INST_CMPE(),
+    DEF_INST_JMP(6),
+    DEF_INST_PUSH(2),
+    DEF_INST_ADD(),
+    DEF_INST_PUSH(4),
     DEF_INST_PRINT(),
 };
 
@@ -214,12 +219,26 @@ int main() {
 			push(loaded_machine,0);
 		}
 		break;
-	    case INST_JMP:
+	    case INST_CJMP:
 		a=pop(loaded_machine);
-		if (a==0) {
-			ip=0;
+		if (a==1) {
+			ip=loaded_machine->instructions[ip].value-1;
+			if (ip >= loaded_machine->program_size+1) {
+				fprintf(stderr,"ERROR: Jumping out of Stack");
+				exit(1);
+			}
+		}
+		break;
+	    case INST_JMP:
+		ip = loaded_machine->instructions[ip].value-1;
+		if (ip>loaded_machine->program_size+1) {
+			ip=loaded_machine->instructions[ip].value-1;
 		} else {
 			continue;
+		}
+		if (ip >= loaded_machine->program_size) {
+			fprintf(stderr,"ERROR: Jumping out of Stack");
+			exit(1);
 		}
 		break;
             case INST_DIV:
