@@ -1,3 +1,6 @@
+
+// 1-21-40
+//
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,6 +16,11 @@ typedef enum {
     INST_SUB,
     INST_DUP,
     INST_SWAP,
+    INST_CMPE,
+    INST_CMPNE,
+    INST_CMPL,
+    INST_CMPG,
+    INST_JMP,
     INST_MUL,
     INST_DIV,
     INST_PRINT,
@@ -36,16 +44,24 @@ typedef struct {
 #define DEF_INST_SUB() {.type=INST_SUB}
 #define DEF_INST_DUP() {.type=INST_DUP}
 #define DEF_INST_SWAP() {.type=INST_SWAP}
+
+#define DEF_INST_CMPE() {.type=INST_CMPE}
+#define DEF_INST_CMPNE() {.type=INST_CMPNE}
+
+#define DEF_INST_CMPL() {.type=INST_CMPL}
+#define DEF_INST_CMPG() {.type=INST_CMPG}
 #define DEF_INST_MUL() {.type=INST_MUL}
+#define DEF_INST_JMP(x) {.type=INST_JMP, .value=x}
 #define DEF_INST_DIV() {.type=INST_DIV}
 #define DEF_INST_PRINT() {.type=INST_PRINT}
 
 
 Inst program[] = {
-    DEF_INST_PUSH(5),
     DEF_INST_PUSH(10),
-    DEF_INST_SWAP(),
-    DEF_INST_DUP(),
+    DEF_INST_PUSH(12),
+    DEF_INST_CMPG(),
+    DEF_INST_JMP(0),
+    DEF_INST_PRINT(),
 };
 
 #define PROGRAM_SIZE (sizeof(program)/sizeof(program[0]))
@@ -73,9 +89,11 @@ int pop(Machine *machine) {
 }
 
 void print_stack(Machine *machine) {
+    printf("----- STACK:\n");
     for (int i=machine->stack_size-1;i>=0;i--) {
         printf("%d\n",machine->stack[i]);
     }
+    printf("----- STACK END\n");
 }
 
 void write_program_to_file (Machine *machine,char *file_path) {
@@ -124,7 +142,8 @@ int main() {
     write_program_to_file(loaded_machine,"test.tim");
     loaded_machine = read_program_from_file("test.tim");
     for (size_t ip=0;ip<loaded_machine->program_size;ip++) {
-        switch (loaded_machine->instructions[ip].type) {
+        print_stack(loaded_machine);
+	switch (loaded_machine->instructions[ip].type) {
             case INST_PUSH:
                 push(loaded_machine,loaded_machine->instructions[ip].value);
                 break;
@@ -157,6 +176,52 @@ int main() {
                 b=pop(loaded_machine);
                 push(loaded_machine,a*b);
                 break;
+	    case INST_CMPE:
+		a=pop(loaded_machine);
+		b=pop(loaded_machine);
+		if (a==b) {
+			push(loaded_machine,1);
+		} else {
+			push(loaded_machine,0);
+		}
+		break;
+		
+	    case INST_CMPNE:
+		a=pop(loaded_machine);
+		b=pop(loaded_machine);
+		if (a!=b) {
+			push(loaded_machine,1);
+		} else {
+			push(loaded_machine,0);
+		}
+		break;
+	    case INST_CMPL:
+		a=pop(loaded_machine);
+		b=pop(loaded_machine);
+		if (a<b) {
+			push(loaded_machine,1);
+		} else {
+			push(loaded_machine,0);
+		}
+		break;
+		
+	    case INST_CMPG:
+		a=pop(loaded_machine);
+		b=pop(loaded_machine);
+		if (a>b) {
+			push(loaded_machine,1);
+		} else {
+			push(loaded_machine,0);
+		}
+		break;
+	    case INST_JMP:
+		a=pop(loaded_machine);
+		if (a==0) {
+			ip=0;
+		} else {
+			continue;
+		}
+		break;
             case INST_DIV:
                 a=pop(loaded_machine);
                 b=pop(loaded_machine);
