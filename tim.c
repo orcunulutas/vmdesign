@@ -28,6 +28,8 @@ typedef enum {
     INST_DIV,
     INST_PRINT,
     INST_HALT,
+    INST_ZJMP,
+    INST_NZJMP,
 } Inst_Set;
 
 typedef struct {
@@ -63,6 +65,8 @@ typedef struct {
 #define DEF_INST_PRINT() {.type=INST_PRINT}
 #define DEF_INST_HALT() {.type=INST_HALT}
 
+#define DEF_INST_ZJMP(x) {.type=INST_JMP, .value=x}
+#define DEF_INST_NZJMP(x) {.type=INST_JMP, .value=x}
 Inst program[] = {
     DEF_INST_PUSH(15),
     DEF_INST_PUSH(3),
@@ -243,6 +247,26 @@ int main() {
 		if (ip >= loaded_machine->program_size) {
 			fprintf(stderr,"ERROR: Jumping out of Stack");
 			exit(1);
+		}
+		break;
+	    case INST_ZJMP:
+		a=pop(loaded_machine);
+		if (a==0) {
+			ip=loaded_machine->instructions[ip].value-1;
+			if (ip >= loaded_machine->program_size+1) {
+				fprintf(stderr,"ERROR: Jumping out of Stack");
+				exit(1);
+			}
+		}
+		break;
+	    case INST_NZJMP:
+		a=pop(loaded_machine);
+		if (a!=0) {
+			ip=loaded_machine->instructions[ip].value-1;
+			if (ip >= loaded_machine->program_size+1) {
+				fprintf(stderr,"ERROR: Jumping out of Stack");
+				exit(1);
+			}
 		}
 		break;
             case INST_DIV:
